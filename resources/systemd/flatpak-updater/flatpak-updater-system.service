@@ -1,0 +1,19 @@
+[Unit]
+Description=Automatic Flatpak System Updates
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/flatpak-updater system
+
+Nice=19
+IOSchedulingClass=idle
+
+Restart=on-failure
+RestartSec=5m
+StartLimitIntervalSec=2h
+StartLimitBurst=3
+
+ProtectHome=true
+PrivateTmp=true

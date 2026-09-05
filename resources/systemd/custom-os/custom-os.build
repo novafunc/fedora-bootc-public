@@ -1,0 +1,13 @@
+[Build]
+ImageTag=localhost/custom-os:latest
+Pull=newer
+SetWorkingDirectory=/var/lib/custom-os
+PodmanArgs=--squash
+
+[Service]
+ExecStartPost=/usr/bin/bootc switch --quiet --transport=containers-storage localhost/custom-os:latest
+ExecStartPost=/usr/bin/bootc upgrade --quiet
+ExecStartPost=/usr/bin/podman image prune --force --filter=label=containers.bootc=1
+ExecStartPost=-/usr/bin/rm -f /etc/containers/systemd/custom-os.build /etc/systemd/system/custom-os-build.timer
+Nice=19
+IOSchedulingClass=idle

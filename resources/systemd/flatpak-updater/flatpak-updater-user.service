@@ -1,0 +1,18 @@
+[Unit]
+Description=Automatic Flatpak User Updates
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/flatpak-updater user
+
+Nice=19
+IOSchedulingClass=idle
+
+Restart=on-failure
+RestartSec=5m
+StartLimitIntervalSec=2h
+StartLimitBurst=3
+
+PrivateTmp=true

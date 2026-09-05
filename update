@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euox pipefail
+
+# parse arguments
+RUN_NOW=false
+for arg in "$@"; do
+    case $arg in
+        --now)
+            RUN_NOW=true
+            shift
+            ;;
+    esac
+done
+
+# regardless pwd when running, cd into this script's directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# store custom-os files here
+TARGET_DIR="/var/lib/custom-os"
+
+# move Containerfile to its destination
+sudo install -d -m 0755 "$TARGET_DIR"
+sudo cp "$SCRIPT_DIR/Containerfile" /var/lib/custom-os/
+sudo cp -r "$SCRIPT_DIR/resources" /var/lib/custom-os/
+sudo cp -r "$SCRIPT_DIR/scripts" /var/lib/custom-os/
+
+# bootstrap case: temporarily copy units to /etc
+if [[ ! -f /usr/share/containers/systemd/custom-os.build ]]; then
+    sudo install -d -m 0755 /etc/containers/systemd /etc/systemd/system
+    sudo cp "$SCRIPT_DIR/resources/systemd/custom-os/custom-os.build" /etc/containers/systemd/
+    sudo cp "$SCRIPT_DIR/resources/systemd/custom-os/custom-os-build.timer" /etc/systemd/system/
+
+    # create custom-os-build.service
+    sudo systemctl daemon-reload
+fi
+
+# conditionally start the service and tail logs
+if [ "$RUN_NOW" = true ]; then
+    # trigger the build service to run immediately
+    sudo systemctl start custom-os-build.service --no-block
+
+    # display the logs (control + c to exit)
+    journalctl -u custom-os-build.service -f
+fi

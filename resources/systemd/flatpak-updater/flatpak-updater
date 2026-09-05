@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mode="${1:-system}"
+
+case "$mode" in
+    system)
+        flatpak --system --noninteractive remove --unused
+        flatpak --system --noninteractive update
+        ;;
+    user)
+        flatpak --user --noninteractive remove --unused
+        flatpak --user --noninteractive update
+        ;;
+    *)
+        echo "Error: Invalid mode '$mode'. Use 'system' or 'user'." >&2
+        exit 1
+        ;;
+esac

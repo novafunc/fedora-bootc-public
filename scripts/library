@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+###############################################################################
+##### Functions #####
+#####################
+
+# install rpms
+dnf_install () {
+    local -n _LIST="$1"
+
+    # check there are packages in the list before trying to install
+    if (( ${#_LIST[@]} > 0 )); then
+        dnf5 install -y "${_LIST[@]}"
+    fi
+}
+
+# install rpms
+dnf_remove () {
+    local -n _LIST="$1"
+
+    # check there are packages in the list before trying to remove
+    if (( ${#_LIST[@]} > 0 )); then
+        dnf5 remove -y "${_LIST[@]}"
+    fi
+}
+
+# enable services
+systemctl_enable () {
+    local -n _LIST="$1"
+    local _scope="${2:-}" # accepts --global, --user, or empty (defaults to system)
+
+    local -a _enable_flags=()
+    local -a _list_flags=()
+
+    if [[ -n "$_scope" ]]; then
+        _enable_flags+=("$_scope")
+        # systemctl list-unit-files needs --user, not --global
+        if [[ "$_scope" == "--global" ]]; then
+            _list_flags+=("--user")
+        else
+            _list_flags+=("$_scope")
+        fi
+    fi
+
+    local service
+    for service in "${_LIST[@]}"; do
+        if systemctl "${_list_flags[@]}" list-unit-files "$service" &>/dev/null; then
+            systemctl "${_enable_flags[@]}" enable "$service"
+        fi
+    done
+}
